@@ -20,26 +20,40 @@ class StockMovement:
 
 
 class Inventory:
-    """Small in-memory inventory service for local development and tests."""
+    """In-memory inventory service. Data resets when the process restarts."""
 
     def __init__(self, initial_items: list[InventoryItem] | None = None) -> None:
-        self._items = {item.sku: item for item in initial_items or []}
+        self._items: dict[str, InventoryItem] = {}
         self._movements: list[StockMovement] = []
+        for item in initial_items or []:
+            self.add_item(item)
 
     def add_item(self, item: InventoryItem) -> None:
-        if item.sku in self._items:
-            raise ValueError(f"SKU already exists: {item.sku}")
+        sku = item.sku.strip().upper()
+        if not sku:
+            raise ValueError("SKU cannot be empty")
+        if not item.name.strip():
+            raise ValueError("Item name cannot be empty")
+        if sku in self._items:
+            raise ValueError(f"SKU already exists: {sku}")
         if item.quantity < 0 or item.low_stock_threshold < 0:
             raise ValueError("Quantities and thresholds cannot be negative")
-        self._items[item.sku] = item
+        item.sku = sku
+        self._items[sku] = item
+
+    def all_items(self) -> list[InventoryItem]:
+        return sorted(self._items.values(), key=lambda item: item.sku)
 
     def get_item(self, sku: str) -> InventoryItem:
+        key = sku.strip().upper()
         try:
-            return self._items[sku]
+            return self._items[key]
         except KeyError as exc:
-            raise KeyError(f"Unknown SKU: {sku}") from exc
+            raise KeyError(f"Unknown SKU: {key}") from exc
 
     def receive(self, sku: str, quantity: int, reason: str = "received", actor: str = "system") -> InventoryItem:
+        if quantity <= 0:
+            raise ValueError("Receive quantity must be positive")
         return self._change(sku, quantity, reason, actor)
 
     def issue(self, sku: str, quantity: int, reason: str = "issued", actor: str = "system") -> InventoryItem:
@@ -47,16 +61,20 @@ class Inventory:
             raise ValueError("Issue quantity must be positive")
         item = self.get_item(sku)
         if item.quantity < quantity:
-            raise ValueError(f"Insufficient stock for {sku}")
+            raise ValueError(f"Insufficient stock for {item.sku}")
         return self._change(sku, -quantity, reason, actor)
 
     def adjust(self, sku: str, quantity: int, reason: str = "adjusted", actor: str = "system") -> InventoryItem:
+        if quantity < 0:
+            raise ValueError("Adjusted quantity cannot be negative")
         item = self.get_item(sku)
         delta = quantity - item.quantity
+        if delta == 0:
+            return item
         return self._change(sku, delta, reason, actor)
 
     def low_stock_items(self) -> list[InventoryItem]:
-        return [item for item in self._items.values() if item.quantity <= item.low_stock_threshold]
+        return [item for item in self.all_items() if item.quantity <= item.low_stock_threshold]
 
     def movement_history(self) -> list[StockMovement]:
         return list(self._movements)
@@ -69,5 +87,5 @@ class Inventory:
         if new_quantity < 0:
             raise ValueError("Stock cannot become negative")
         item.quantity = new_quantity
-        self._movements.append(StockMovement(sku, delta, reason, actor))
+        self._movements.append(StockMovement(item.sku, delta, reason.strip() or "unspecified", actor))
         return item
