@@ -1,35 +1,42 @@
-# Warehouse-Inventory-Telegram-Bot
+# Warehouse Inventory Telegram Bot
 
-A Python Telegram bot starter for warehouse stock tracking, inventory movements, and low-stock alerts.
+A Python Telegram bot starter for stock visibility, receiving and issuing stock, and low-stock checks.
 
-## What this starter includes
+## Commands
 
-- In-memory stock operations for receiving, issuing, and adjusting inventory
-- A low-stock alert structure that can be connected to Telegram notifications
-- Environment-based configuration with no credentials committed
-- Clear seams for adding a database, authentication, and audit logging
+- `/start` — welcome message
+- `/help` — list commands
+- `/stock` — show inventory
+- `/lowstock` — show items at or below their threshold
+- `/receive SKU QUANTITY` — receive stock
+- `/issue SKU QUANTITY` — issue stock
 
-## Quick start
+The repository includes demo SKUs so the bot can be explored without connecting to a real warehouse system.
 
-1. Create a virtual environment: python -m venv .venv
-2. Activate it and install dependencies: pip install -r requirements.txt
-3. Copy .env.example to .env and add local values.
-4. Run python bot.py.
+## Run locally
 
-The starter uses an in-memory store so it is safe to explore. Replace it with a persistent database and add role-based access before handling production inventory.
+```bash
+python -m venv .venv
+# Windows:
+.venv\Scripts\activate
+# macOS/Linux:
+source .venv/bin/activate
+pip install -r requirements.txt
+```
 
-## Project structure
+Copy `.env.example` to `.env`, create a bot with Telegram's official BotFather, and place its token in `TELEGRAM_BOT_TOKEN`. Run:
 
-- bot.py - Telegram-facing workflow placeholder
-- inventory.py - stock model and movement operations
-- .env.example - local configuration template without secrets
+```bash
+python bot.py
+```
 
-## Operational safeguards
+Set `TELEGRAM_ALLOWED_USER_IDS` to a comma-separated list of numeric Telegram user IDs before allowing anyone to update real stock. If left empty, the demo allows all users to change its in-memory data.
 
-Keep the bot token out of source control. Validate quantities, authenticate warehouse staff, record an immutable movement log, and test alert delivery before production use.
+## Limitations before production
 
-## Status
+- Inventory is in memory and resets on restart.
+- No persistent database or automatic Telegram alert delivery is connected.
+- Configure and test access controls before handling real stock.
+- Add durable audit logging, backups, deployment monitoring, and tests before production use.
 
-Starter project for iterative development. Add a Telegram framework, durable storage, monitoring, and deployment configuration as requirements become clear.
-# Warehouse-Inventory-Telegram-Bot
-A Python Telegram bot for warehouse stock tracking, inventory movements, and low-stock alerts.
+Never commit bot tokens, warehouse records, or customer data.
