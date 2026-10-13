@@ -32,6 +32,14 @@ python bot.py
 
 Set `TELEGRAM_ALLOWED_USER_IDS` to a comma-separated list of numeric Telegram user IDs before allowing anyone to update real stock. If left empty, the demo allows all users to change its in-memory data.
 
+## Tests
+
+Run the inventory unit tests with:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
 ## Limitations before production
 
 - Inventory is in memory and resets on restart.
